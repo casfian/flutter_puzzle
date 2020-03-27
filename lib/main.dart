@@ -45,14 +45,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   //functions declaration
-  
+
   //Function 1:
   // we need to find out the image size, to be used in the PuzzlePiece widget
   Future<Size> getImageSize(Image image) async {
     final Completer<Size> completer = Completer<Size>();
 
     image.image.resolve(const ImageConfiguration()).addListener(
-      (ImageInfo info, bool _) {
+      ImageStreamListener((ImageInfo info, bool synchronousCall) {
         completer.complete(Size(
           info.image.width.toDouble(),
           info.image.height.toDouble(),
