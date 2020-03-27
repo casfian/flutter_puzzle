@@ -18,8 +18,8 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   final String title;
-  final int rows = 3;
-  final int cols = 3;
+  final int rows = 2;
+  final int cols = 2;
 
   MyHomePage({Key key, this.title}) : super(key: key);
 
@@ -51,14 +51,16 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<Size> getImageSize(Image image) async {
     final Completer<Size> completer = Completer<Size>();
 
-    image.image.resolve(const ImageConfiguration()).addListener(
-      ImageStreamListener((ImageInfo info, bool synchronousCall) {
+    image.image
+        .resolve(const ImageConfiguration())
+        .addListener(ImageStreamListener(
+      (ImageInfo info, bool synchronousCall) {
         completer.complete(Size(
           info.image.width.toDouble(),
           info.image.height.toDouble(),
         ));
       },
-    );
+    ));
     final Size imageSize = await completer.future;
     return imageSize;
   }
@@ -78,10 +80,28 @@ class _MyHomePageState extends State<MyHomePage> {
               row: x,
               col: y,
               maxRow: widget.rows,
-              maxCol: widget.cols));
+              maxCol: widget.cols,
+              bringToTop: this.bringToTop,
+              sendToBack: this.sendToBack));
         });
       }
     }
+  }
+
+  // when the pan of a piece starts, we need to bring it to the front of the stack
+  void bringToTop(Widget widget) {
+    setState(() {
+      pieces.remove(widget);
+      pieces.add(widget);
+    });
+  }
+
+  // when a piece reaches its final position, it will be sent to the back of the stack to not get in the way of other, still movable, pieces
+  void sendToBack(Widget widget) {
+    setState(() {
+      pieces.remove(widget);
+      pieces.insert(0, widget);
+    });
   }
 
   //end functions declaration
@@ -90,10 +110,12 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Flutter Puzzle'),
+        title: Text('Flutter Jigsaw', style: TextStyle(color: Colors.black),),
+        elevation: 0,
+        backgroundColor: Colors.white,
         actions: <Widget>[
           IconButton(
-              icon: Icon(Icons.camera),
+              icon: Icon(Icons.camera, color: Colors.black,),
               onPressed: () {
                 showModalBottomSheet(
                     context: context,
@@ -130,10 +152,9 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: SafeArea(
           child: Center(
-            child: _image == null
-                ? Text('No image selected.')
-                : Stack(children: pieces)
-          ),
+              child: _image == null
+                  ? Text('No image selected.')
+                  : Stack(children: pieces)),
         ),
       ),
     );

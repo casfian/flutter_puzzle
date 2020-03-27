@@ -8,15 +8,19 @@ class PuzzlePiece extends StatefulWidget {
   final int col;
   final int maxRow;
   final int maxCol;
+  final Function bringToTop;
+  final Function sendToBack;
 
   PuzzlePiece(
       {Key key,
-        @required this.image,
-        @required this.imageSize,
-        @required this.row,
-        @required this.col,
-        @required this.maxRow,
-        @required this.maxCol})
+      @required this.image,
+      @required this.imageSize,
+      @required this.row,
+      @required this.col,
+      @required this.maxRow,
+      @required this.maxCol,
+      @required this.bringToTop,
+      @required this.sendToBack})
       : super(key: key);
 
   @override
@@ -28,11 +32,14 @@ class PuzzlePiece extends StatefulWidget {
 class PuzzlePieceState extends State<PuzzlePiece> {
   double top;
   double left;
+  bool isMovable = true;
 
   @override
   Widget build(BuildContext context) {
     final imageWidth = MediaQuery.of(context).size.width;
-    final imageHeight = MediaQuery.of(context).size.height * MediaQuery.of(context).size.width / widget.imageSize.width;
+    final imageHeight = MediaQuery.of(context).size.height *
+        MediaQuery.of(context).size.width /
+        widget.imageSize.width;
     final pieceWidth = imageWidth / widget.maxCol;
     final pieceHeight = imageHeight / widget.maxRow;
 
@@ -46,15 +53,43 @@ class PuzzlePieceState extends State<PuzzlePiece> {
     }
 
     return Positioned(
-        top: top,
-        left: left,
-        width: imageWidth,
+      top: top,
+      left: left,
+      width: imageWidth,
+      child: GestureDetector(
+        onTap: () {
+          if (isMovable) {
+            widget.bringToTop(widget);
+          }
+        },
+        onPanStart: (_) {
+          if (isMovable) {
+            widget.bringToTop(widget);
+          }
+        },
+        onPanUpdate: (dragUpdateDetails) {
+          if (isMovable) {
+            setState(() {
+              top += dragUpdateDetails.delta.dy;
+              left += dragUpdateDetails.delta.dx;
+
+              if (-10 < top && top < 10 && -10 < left && left < 10) {
+                top = 0;
+                left = 0;
+                isMovable = false;
+                widget.sendToBack(widget);
+              }
+            });
+          }
+        },
         child: ClipPath(
           child: CustomPaint(
-            foregroundPainter: PuzzlePiecePainter(widget.row, widget.col, widget.maxRow, widget.maxCol),
-            child: widget.image
-          ),
-        clipper: PuzzlePieceClipper(widget.row, widget.col, widget.maxRow, widget.maxCol),
+              foregroundPainter: PuzzlePiecePainter(
+                  widget.row, widget.col, widget.maxRow, widget.maxCol),
+              child: widget.image),
+          clipper: PuzzlePieceClipper(
+              widget.row, widget.col, widget.maxRow, widget.maxCol),
+        ),
       ),
     );
   }
@@ -120,7 +155,13 @@ Path getPiecePath(Size size, int row, int col, int maxRow, int maxCol) {
   } else {
     // top bump
     path.lineTo(offsetX + width / 3, offsetY);
-    path.cubicTo(offsetX + width / 6, offsetY - bumpSize, offsetX + width / 6 * 5, offsetY - bumpSize, offsetX + width / 3 * 2, offsetY);
+    path.cubicTo(
+        offsetX + width / 6,
+        offsetY - bumpSize,
+        offsetX + width / 6 * 5,
+        offsetY - bumpSize,
+        offsetX + width / 3 * 2,
+        offsetY);
     path.lineTo(offsetX + width, offsetY);
   }
 
@@ -130,7 +171,13 @@ Path getPiecePath(Size size, int row, int col, int maxRow, int maxCol) {
   } else {
     // right bump
     path.lineTo(offsetX + width, offsetY + height / 3);
-    path.cubicTo(offsetX + width - bumpSize, offsetY + height / 6, offsetX + width - bumpSize, offsetY + height / 6 * 5, offsetX + width, offsetY + height / 3 * 2);
+    path.cubicTo(
+        offsetX + width - bumpSize,
+        offsetY + height / 6,
+        offsetX + width - bumpSize,
+        offsetY + height / 6 * 5,
+        offsetX + width,
+        offsetY + height / 3 * 2);
     path.lineTo(offsetX + width, offsetY + height);
   }
 
@@ -140,7 +187,13 @@ Path getPiecePath(Size size, int row, int col, int maxRow, int maxCol) {
   } else {
     // bottom bump
     path.lineTo(offsetX + width / 3 * 2, offsetY + height);
-    path.cubicTo(offsetX + width / 6 * 5, offsetY + height - bumpSize, offsetX + width / 6, offsetY + height - bumpSize, offsetX + width / 3, offsetY + height);
+    path.cubicTo(
+        offsetX + width / 6 * 5,
+        offsetY + height - bumpSize,
+        offsetX + width / 6,
+        offsetY + height - bumpSize,
+        offsetX + width / 3,
+        offsetY + height);
     path.lineTo(offsetX, offsetY + height);
   }
 
@@ -150,7 +203,13 @@ Path getPiecePath(Size size, int row, int col, int maxRow, int maxCol) {
   } else {
     // left bump
     path.lineTo(offsetX, offsetY + height / 3 * 2);
-    path.cubicTo(offsetX - bumpSize, offsetY + height / 6 * 5, offsetX - bumpSize, offsetY + height / 6, offsetX, offsetY + height / 3);
+    path.cubicTo(
+        offsetX - bumpSize,
+        offsetY + height / 6 * 5,
+        offsetX - bumpSize,
+        offsetY + height / 6,
+        offsetX,
+        offsetY + height / 3);
     path.close();
   }
 
